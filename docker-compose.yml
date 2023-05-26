@@ -1,0 +1,110 @@
+version: '3.7'
+
+services:
+  
+  config-server:
+    build:
+      context: ./configserver
+      dockerfile: Dockerfile
+    container_name: config-server
+    ports:
+      - 8071:8071
+    networks:
+      - net_grupo3
+
+  eureka-server:
+    build:
+      context: ./eurekaserver
+      dockerfile: Dockerfile
+    container_name: eureka-server
+    ports:
+      - 8070:8070
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_CONFIG_IMPORT=configserver:http://config-server:8071/
+    depends_on:
+      config-server:
+        condition: service_started
+    networks:
+      - net_grupo3
+
+  loans:
+    build:
+      context: ./loans
+      dockerfile: Dockerfile
+    container_name: loans
+    ports:
+      - 8090:8090
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_CONFIG_IMPORT=configserver:http://config-server:8071/
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8070/eureka/
+    depends_on:
+      config-server:
+        condition: service_started
+      eureka-server:
+        condition: service_started
+    networks:
+      - net_grupo3
+
+  cards:
+    build:
+      context: ./cards
+      dockerfile: Dockerfile
+    container_name: cards
+    ports:
+      - 9000:9000
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_CONFIG_IMPORT=configserver:http://config-server:8071/
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8070/eureka/
+    depends_on:
+      config-server:
+        condition: service_started
+      eureka-server:
+        condition: service_started
+    networks:
+      - net_grupo3
+
+  accounts:
+    build:
+      context: ./accounts
+      dockerfile: Dockerfile
+    container_name: accounts
+    ports:
+      - 8081:8081
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_CONFIG_IMPORT=configserver:http://config-server:8071/
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8070/eureka/
+    depends_on:
+      config-server:
+        condition: service_started
+      eureka-server:
+        condition: service_started
+    networks:
+      - net_grupo3
+  
+  gateway-server:
+    build:
+      context: ./gatewayserver
+      dockerfile: Dockerfile
+    container_name: gateway-server
+    ports:
+      - 8072:8072
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_CONFIG_IMPORT=configserver:http://config-server:8071/
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8070/eureka/
+    depends_on:
+      config-server:
+        condition: service_started
+      eureka-server:
+        condition: service_started
+    networks:
+      - net_grupo3
+
+networks:
+  net_grupo3:
+    driver: bridge
+    name: net_grupo3
